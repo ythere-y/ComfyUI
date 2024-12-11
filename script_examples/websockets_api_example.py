@@ -2,6 +2,7 @@
 # Once the prompt execution is done it downloads the images using the /history endpoint
 
 from random import random
+from tqdm import tqdm
 import websocket  # NOTE: websocket-client (https://github.com/websocket-client/websocket-client)
 import uuid
 import json
@@ -38,10 +39,25 @@ def get_history(prompt_id):
 def get_images(ws, prompt):
     prompt_id = queue_prompt(prompt)["prompt_id"]
     output_images = {}
+    DisplayFlag = False
     while True:
+        bar = None
         out = ws.recv()
         if isinstance(out, str):
             message = json.loads(out)
+            if message["type"] == "progress":
+                if DisplayFlag == False:
+                    DisplayFlag = True
+                    print(f"message =>\n{json.dumps(message, indent=4)}")
+                if bar == None:
+                    bar = tqdm()
+                    bar.set_description("Progressing")
+                bar.total = message["data"]["max"]
+                bar.n = message["data"]["value"]
+                bar.refresh()
+                if bar.n >= bar.total:
+                    bar.close()
+                    bar = None
             if message["type"] == "executing":
                 data = message["data"]
                 if data["node"] is None and data["prompt_id"] == prompt_id:
