@@ -40,8 +40,8 @@ def get_images(ws, prompt):
     prompt_id = queue_prompt(prompt)["prompt_id"]
     output_images = {}
     DisplayFlag = False
+    bar = None
     while True:
-        bar = None
         out = ws.recv()
         if isinstance(out, str):
             message = json.loads(out)
@@ -49,8 +49,8 @@ def get_images(ws, prompt):
                 if DisplayFlag == False:
                     DisplayFlag = True
                     print(f"message =>\n{json.dumps(message, indent=4)}")
-                if bar == None:
-                    bar = tqdm()
+                if bar is None:
+                    bar = tqdm(dynamic_ncols=True, leave=True)
                     bar.set_description("Progressing")
                 bar.total = message["data"]["max"]
                 bar.n = message["data"]["value"]
